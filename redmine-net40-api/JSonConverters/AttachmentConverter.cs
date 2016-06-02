@@ -47,7 +47,22 @@ namespace Redmine.Net.Api.JSonConverters
             return null;
         }
 
-        public override IDictionary<string, object> Serialize(object obj, JavaScriptSerializer serializer) { return null; }
+        public override IDictionary<string, object> Serialize(object obj, JavaScriptSerializer serializer)
+        {
+            var entity = obj as Attachment;
+            var result = new Dictionary<string, object>();
+
+            if (entity != null)
+            {
+                result.Add(RedmineKeys.FILENAME, entity.FileName);
+                result.Add(RedmineKeys.DESCRIPTION, entity.Description);
+            }
+
+            var root = new Dictionary<string, object>();
+            root[RedmineKeys.ATTACHMENT] = result;
+
+            return root;
+        }
 
         public override IEnumerable<Type> SupportedTypes { get { return new List<Type>(new[] { typeof(Attachment) }); } }
 

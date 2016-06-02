@@ -21,6 +21,7 @@ using System.Xml;
 using System.Xml.Serialization;
 using Redmine.Net.Api.Extensions;
 using Redmine.Net.Api.Types;
+using Redmine.Net.Api.Exceptions;
 
 namespace Redmine.Net.Api.Internals
 {
@@ -96,7 +97,7 @@ namespace Redmine.Net.Api.Internals
             }
             catch (Exception ex)
             {
-                throw new RedmineException("Serialization error");
+                throw new RedmineException("Serialization error", ex);
             }
         }
 
@@ -128,7 +129,7 @@ namespace Redmine.Net.Api.Internals
             }
             catch (Exception ex)
             {
-                throw new RedmineException("Deserialization error");
+                throw new RedmineException("Deserialization error",ex);
             }
         }
 
@@ -156,7 +157,7 @@ namespace Redmine.Net.Api.Internals
 
             catch (Exception ex)
             {
-                throw new RedmineException("Deserialization error");
+                throw new RedmineException("Deserialization error", ex);
             }
         }
 

@@ -29,6 +29,7 @@ using Redmine.Net.Api.Internals;
 using Redmine.Net.Api.Types;
 using Group = Redmine.Net.Api.Types.Group;
 using Version = Redmine.Net.Api.Types.Version;
+using Redmine.Net.Api.Exceptions;
 
 namespace Redmine.Net.Api
 {
@@ -46,13 +47,21 @@ namespace Redmine.Net.Api
 
         public const string ENTITY_WITH_PARENT_FORMAT = "{0}/{1}/{2}/{3}.{4}";
 
+        public const string ATTACHMENT_UPDATE_FORMAT = "{0}/attachments/issues/{1}.{2}";
+
         public const string CURRENT_USER_URI = "current";
-        //Represents an HTTP PUT protocol method that is used to replace an entity identified by a URI.
+        /// <summary>
+        /// Represents an HTTP PUT protocol method that is used to replace an entity identified by a URI.
+        /// </summary>
         public const string PUT = "PUT";
         /// <summary>
         /// Represents an HTTP POST protocol method that is used to post a new entity as an addition to a URI.
         /// </summary>
         public const string POST = "POST";
+        /// <summary>
+        /// Represents an HTTP PATCH protocol method that is used to patch an existing entity identified  by a URI.
+        /// </summary>
+        public const string PATCH = "PATCH";
         /// <summary>
         /// Represents an HTTP DELETE protocol method.
         /// </summary>
@@ -248,7 +257,6 @@ namespace Redmine.Net.Api
         public WikiPage GetWikiPage(string projectId, NameValueCollection parameters, string pageName, uint version = 0)
         {
             var url = UrlHelper.GetWikiPageUrl(this, projectId, parameters, pageName, version);
-
             return ExecuteDownload<WikiPage>(url, "GetWikiPage", parameters);
         }
 
@@ -274,11 +282,9 @@ namespace Redmine.Net.Api
         public WikiPage CreateOrUpdateWikiPage(string projectId, string pageName, WikiPage wikiPage)
         {
             string result = RedmineSerializer.Serialize(wikiPage, MimeFormat);
-
             if (string.IsNullOrEmpty(result)) return null;
 
             var url = UrlHelper.GetWikiCreateOrUpdaterUrl(this, projectId, pageName);
-
             return ExecuteUpload<WikiPage>(url, PUT, result, "CreateOrUpdateWikiPage");
         }
 
@@ -363,7 +369,6 @@ namespace Redmine.Net.Api
         /// <typeparam name="T">The type of objects to retrieve.</typeparam>
         /// <param name="parameters">Optional filters and/or optional fetched data.</param>
         /// <returns>Returns a complete list of objects.</returns>
-
         public List<T> GetObjects<T>(NameValueCollection parameters) where T : class, new()
         {
             int totalCount = 0, pageSize;
@@ -401,7 +406,6 @@ namespace Redmine.Net.Api
         /// <typeparam name="T">The type of objects to retrieve.</typeparam>
         /// <param name="parameters">Optional filters and/or optional fetched data.</param>
         /// <returns>Returns a complete list of objects.</returns>
-
         [Obsolete("Use GetObjects method instead.")]
         public List<T> GetTotalObjectList<T>(NameValueCollection parameters) where T : class, new()
         {
@@ -440,9 +444,7 @@ namespace Redmine.Net.Api
         public T CreateObject<T>(T obj, string ownerId) where T : class, new()
         {
             var url = UrlHelper.GetCreateUrl<T>(this, ownerId);
-
             var data = RedmineSerializer.Serialize(obj, MimeFormat);
-
             return ExecuteUpload<T>(url, POST, data, "CreateObject");
         }
 
@@ -473,11 +475,8 @@ namespace Redmine.Net.Api
         public void UpdateObject<T>(string id, T obj, string projectId) where T : class, new()
         {
             var url = UrlHelper.GetUploadUrl(this, id, obj, projectId);
-
             var data = RedmineSerializer.Serialize(obj, MimeFormat);
-
             data = Regex.Replace(data, @"\r\n|\r|\n", "\r\n");
-
             ExecuteUpload(url, PUT, data, "UpdateObject");
         }
 
@@ -492,7 +491,6 @@ namespace Redmine.Net.Api
         public void DeleteObject<T>(string id, NameValueCollection parameters) where T : class, new()
         {
             var url = UrlHelper.GetDeleteUrl<T>(this, id);
-
             ExecuteUpload(url, DELETE, string.Empty, "DeleteObject");
         }
 
@@ -614,7 +612,7 @@ namespace Redmine.Net.Api
             {
                 try
                 {
-                    if (actionType == POST || actionType == DELETE || actionType == PUT)
+                    if (actionType == POST || actionType == DELETE || actionType == PUT || actionType == PATCH)
                     {
                         wc.UploadString(address, actionType, data);
                     }
@@ -632,10 +630,9 @@ namespace Redmine.Net.Api
             {
                 try
                 {
-                    if (actionType == POST || actionType == DELETE || actionType == PUT)
+                    if (actionType == POST || actionType == DELETE || actionType == PUT || actionType == PATCH)
                     {
                         var response = wc.UploadString(address, actionType, data);
-
                         return RedmineSerializer.Deserialize<T>(response, MimeFormat);
                     }
                 }
@@ -681,5 +678,19 @@ namespace Redmine.Net.Api
                 return null;
             }
         }
+
+        public void UpdateAttachment(int issueId, Attachment attachment)
+        {
+            var address = UrlHelper.GetAttachmentUpdateUrl(this, issueId);
+            var attachments = new Attachments {{attachment.Id, attachment}};
+            var data = RedmineSerializer.Serialize(attachments, MimeFormat);
+
+            ExecuteUpload(address, PATCH, data, "UpdateAttachment");    
+        }
+    }
+
+    public class Attachments : Dictionary<int, Attachment>
+    {
+
     }
 }

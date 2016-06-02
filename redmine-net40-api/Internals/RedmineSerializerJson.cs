@@ -37,6 +37,7 @@ namespace Redmine.Net.Api.Internals
             {typeof (Query), new QueryConverter()},
             {typeof (Version), new VersionConverter()},
             {typeof (Attachment), new AttachmentConverter()},
+            {typeof (Attachments), new AttachmentsConverter()},
             {typeof (IssueRelation), new IssueRelationConverter()},
             {typeof (TimeEntry), new TimeEntryConverter()},
             {typeof (IssueStatus),new IssueStatusConverter()},
@@ -96,7 +97,7 @@ namespace Redmine.Net.Api.Internals
         {
             var result = JsonDeserializeToList(jsonString, root, typeof(T), out totalCount);
 
-            return result == null ? null : ((ArrayList)result).OfType<T>().ToList();
+            return ((ArrayList) result)?.OfType<T>().ToList();
         }
 
         public static T JsonDeserialize<T>(string jsonString, string root) where T : new()
